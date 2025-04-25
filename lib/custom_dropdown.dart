@@ -47,25 +47,29 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
   // METHOD: on submission [_txtCtrlr] actions
   void submitOnTap(String? val) {
     setState(() {
-      /// on submission check for user typed text is existing in [filteredItems]
-      bool isAvailSubmit = widget.items.any(
-        (element) => element.toString() == val!,
-      );
+      if (_overlayCtrlr.isShowing) {
+        /// on submission check for user typed text is existing in [filteredItems]
+        bool isAvailSubmit = widget.items.any(
+          (element) => element.toString() == val!,
+        );
 
-      if (!isAvailSubmit) {
-        /// if [!isAvailSubmit] Assign first visible item to [_txtCtrlr.text] or if none empty it.
-        _txtCtrlr.text = filteredItems.isNotEmpty
-            ? widget.itemLabelBuilder(filteredItems[0])
-            : '';
+        if (!isAvailSubmit) {
+          /// if [!isAvailSubmit] Assign first visible item to [_txtCtrlr.text] or if none empty it.
+          _txtCtrlr.text = filteredItems.isNotEmpty
+              ? widget.itemLabelBuilder(filteredItems[0])
+              : '';
+        }
+        _overlayCtrlr.toggle();
+      } else {
+        // if [_overlayCtrlr.isShowing] is false then no need to an value
+        _txtCtrlr.text = "";
       }
+
       // reset state
       visibleState = false;
       _generalWidth = context.size?.width;
+      filteredItems = widget.items;
     });
-    // reset overlay
-    if (_overlayCtrlr.isShowing) {
-      _overlayCtrlr.toggle();
-    }
   }
 
   // METHOD: on Type of Text Field actions
@@ -134,88 +138,54 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
             ),
           );
         },
-        child: ButtonWidget(
-          key: _buttonKey,
-          onTap: onTap,
-          visibleState: visibleState,
+        child: SizedBox(
           width: _generalWidth,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: TextField(
-              controller: _txtCtrlr,
-              autofocus: false,
-              keyboardType: TextInputType.text,
-              onSubmitted: submitOnTap,
-              onChanged: onChanged,
-              decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  isDense: true),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class ButtonWidget extends StatefulWidget {
-  final double? height;
-  final double? width;
-  final VoidCallback? onTap;
-  final Widget? child;
-  final bool visibleState;
-
-  const ButtonWidget({
-    super.key,
-    this.height = 48,
-    this.width,
-    this.onTap,
-    this.child,
-    this.visibleState = false,
-  });
-
-  @override
-  State<ButtonWidget> createState() => _ButtonWidgetState();
-}
-
-class _ButtonWidgetState extends State<ButtonWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: widget.height,
-      width: widget.width,
-      child: Material(
-        color: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: Colors.black12),
-        ),
-        child: InkWell(
-          onTap: () {
-            if (widget.onTap == null) return;
-            widget.onTap!();
-          },
-          borderRadius: BorderRadius.circular(10),
-          overlayColor: WidgetStatePropertyAll(Colors.pink[100]),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: widget.child ?? const SizedBox.shrink(),
+          child: TextField(
+            key: _buttonKey,
+            controller: _txtCtrlr,
+            autofocus: false,
+            keyboardType: TextInputType.text,
+            onSubmitted: submitOnTap,
+            onChanged: onChanged,
+            textAlignVertical: TextAlignVertical.center,
+            decoration: InputDecoration(
+              constraints: const BoxConstraints(minHeight: 40, maxHeight: 50),
+              contentPadding: const EdgeInsets.all(10),
+              suffixIcon: InkWell(
+                onTap: () => onTap.call(),
+                borderRadius: BorderRadius.circular(10),
+                overlayColor: WidgetStatePropertyAll(Colors.pink[100]),
+                child: AnimatedRotation(
+                  turns: visibleState ? 0.5 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(
+                    Icons.arrow_drop_down_rounded,
+                    color: Colors.black54,
+                    size: 30,
+                  ),
+                ),
               ),
-              Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: AnimatedRotation(
-                    turns: widget.visibleState ? 0.5 : 0.0,
-                    duration: const Duration(milliseconds: 200),
-                    child: const Icon(
-                      Icons.arrow_drop_down_rounded,
-                      color: Colors.black54,
-                      size: 30,
-                    ),
-                  )),
-            ],
+              fillColor: Colors.white12,
+              filled: true,
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color: Colors.black.withAlpha(80),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Colors.pink),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              border: OutlineInputBorder(
+                borderSide: const BorderSide(
+                  color: Colors.grey,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              isDense: true,
+            ),
           ),
         ),
       ),
